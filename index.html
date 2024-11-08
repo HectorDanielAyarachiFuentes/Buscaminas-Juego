@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Juego de Buscaminas clásico" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Buscaminas | Juego Clásico</title>
+  </head>
+
+  <body>
+    <!-- Pantalla de bienvenida -->
+    <div id="welcome-screen" class="screen">
+      <h1>¡Bienvenido al Buscaminas!</h1>
+      <div class="welcome-form">
+        <input 
+          type="text" 
+          id="initial-player-name" 
+          placeholder="Ingresa tu nombre" 
+          maxlength="20"
+          required
+        />
+        <button onclick="showDifficultyScreen()" class="btn btn-primary">Continuar</button>
+      </div>
+    </div>
+
+    <!-- Pantalla de selección de dificultad -->
+    <div id="difficulty-screen" class="screen" style="display:none">
+      <h2>Selecciona la dificultad</h2>
+      <div class="difficulty-buttons">
+        <button onclick="startGameWithDifficulty('easy')" class="btn btn-difficulty">
+          Fácil (8x8, 5 minas)
+        </button>
+        <button onclick="startGameWithDifficulty('medium')" class="btn btn-difficulty">
+          Medio (12x12, 15 minas)
+        </button>
+        <button onclick="startGameWithDifficulty('hard')" class="btn btn-difficulty">
+          Difícil (16x16, 30 minas)
+        </button>
+      </div>
+    </div>
+
+    <!-- Pantalla del juego -->
+    <div id="game-screen" class="game-container" style="display:none">
+      <div class="game-board">
+        <h1>Buscaminas</h1>
+        <div class="controls">
+          <span id="timer">Tiempo: 0s</span>
+          <span id="mines">Minas: 5</span>
+          <span id="score">Puntos: 0</span>
+        </div>
+        <div class="navigation-buttons">
+          <button onclick="goToWelcome()" class="btn btn-nav">Ir al Inicio</button>
+          <button onclick="goToDifficulty()" class="btn btn-nav">Elegir Dificultad</button>
+        </div>
+        <button id="start-game" class="btn btn-primary">¡Juega!</button>
+        <div class="board"></div>
+        <div id="overlay">
+          <div id="message">
+            <h2>¡Fin del Juego!</h2>
+            <p id="game-over-message"></p>
+            <p>Haz click en ¡Juega! para empezar una nueva partida</p>
+          </div>
+        </div>
+      </div>
+      <div class="player-info">
+        <h2>Información del Jugador</h2>
+        <div id="current-player-info">
+          <p>Jugador: <span id="player-name-display"></span></p>
+          <p>Nivel: <span id="difficulty-display"></span></p>
+        </div>
+        <div class="scores-container">
+          <h3>Mejores Puntajes</h3>
+          <ul id="player-scores"></ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Desarrollado con ❤️ | <span id="year"></span></p>
+    </footer>
+
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
+      }
+
+      .screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        padding: 2rem;
+      }
+
+      .welcome-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 300px;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .btn-difficulty {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-difficulty:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+      }
+
+      .navigation-buttons {
+        display: flex;
+        gap: 1rem;
+        margin: 1rem 0;
+        justify-content: center;
+      }
+
+      .btn-nav {
+        background: #6c757d;
+        color: white;
+        padding: 0.5rem 1rem;
+      }
+
+      .btn-nav:hover {
+        background: #5a6268;
+      }
+
+      #start-game {
+        display: block;
+        margin: 1rem auto;
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+      }
+
+      .game-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .game-board {
+        flex: 1;
+        min-width: 300px;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+        gap: 1px;
+        margin: 0 auto;
+        background: #bdbdbd;
+        border: 3px solid #7b7b7b;
+        padding: 3px;
+        width: fit-content;
+      }
+
+      .cell {
+        width: 40px;
+        height: 40px;
+        border: 2px solid;
+        border-color: #fff #7b7b7b #7b7b7b #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: #c0c0c0;
+        user-select: none;
+      }
+
+      .cell:hover:not(.revealed) {
+        background: #d1d1d1;
+      }
+
+      .mine {
+        background: #ff4d4d !important;
+        border-color: #7b7b7b;
+      }
+
+      .revealed {
+        background: #e9ecef;
+        border: 1px solid #7b7b7b;
+      }
+
+      .player-info {
+        flex: 0 1 300px;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #0056b3;
+      }
+
+      input[type="text"] {
+        padding: 0.75rem;
+        border: 2px solid #dee2e6;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+
+      .scores-container {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      #overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        align-items: center;
+        justify-content: center;
+      }
+
+      #message {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        text-align: center;
+        animation: fadeInScale 0.3s ease;
+      }
+
+      footer {
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+        color: #6c757d;
+      }
+
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+        }
+        
+        .game-board, .player-info {
+          flex: 1 1 100%;
+        }
+      }
+    </style>
+
+    <script>
+      // Configuración inicial del juego
+      const board = document.querySelector('.board');
+      const overlay = document.getElementById('overlay');
+      const playerScoresList = document.getElementById('player-scores');
+      const gameOverMessage = document.getElementById('game-over-message');
+      const timerDisplay = document.getElementById('timer');
+      const scoreDisplay = document.getElementById('score');
+      const minesDisplay = document.getElementById('mines');
+      const startGameButton = document.getElementById('start-game');
+      
+      // Configuración de dificultades
+      const difficulties = {
+        easy: { rows: 8, cols: 8, mines: 5 },
+        medium: { rows: 12, cols: 12, mines: 15 },
+        hard: { rows: 16, cols: 16, mines: 30 }
+      };
+      
+      let currentDifficulty = 'easy';
+      let rows = difficulties.easy.rows;
+      let cols = difficulties.easy.cols;
+      let totalMines = difficulties.easy.mines;
+      let totalCells = rows * cols;
+      let minePositions = [];
+      let score = 0;
+      let startTime = null;
+      let intervalId = null;
+      let playerName = '';
+      let gameActive = false;
+      let revealedCells = new Set();
+
+      // Cargar puntuaciones guardadas al iniciar
+      loadScores();
+
+      function loadScores() {
+        const savedScores = localStorage.getItem('minesweeperScores');
+        if (savedScores) {
+          const scores = JSON.parse(savedScores);
+          scores.forEach(score => {
+            addScoreToList(score);
+          });
+        }
+      }
+
+      function showDifficultyScreen() {
+        playerName = document.getElementById('initial-player-name').value.trim();
+        if (!playerName) {
+          alert('Por favor, ingresa tu nombre');
+          return;
+        }
+        
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('difficulty-screen').style.display = 'flex';
+        document.getElementById('player-name-display').textContent = playerName;
+      }
+
+      function startGameWithDifficulty(difficulty) {
+        currentDifficulty = difficulty;
+        const config = difficulties[difficulty];
+        rows = config.rows;
+        cols = config.cols;
+        totalMines = config.mines;
+        totalCells = rows * cols;
+        
+        document.getElementById('difficulty-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('difficulty-display').textContent = 
+          difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        
+        minesDisplay.textContent = `Minas: ${totalMines}`;
+        board.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+        board.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+        
+        createBoard();
+        startGameButton.style.display = 'block';
+      }
+
+      function createBoard() {
+        board.innerHTML = '';
+        for (let i = 0; i < totalCells; i++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.addEventListener('click', () => handleCellClick(cell, i));
+          board.appendChild(cell);
+        }
+        minePositions = generateMines();
+        revealedCells.clear();
+        score = 0;
+        updateScore();
+      }
+
+      function generateMines() {
+        const positions = new Set();
+        while (positions.size < totalMines) {
+          positions.add(Math.floor(Math.random() * totalCells));
+        }
+        return Array.from(positions);
+      }
+
+      function handleCellClick(cell, index) {
+        if (!gameActive || cell.classList.contains('revealed')) {
+          return;
+        }
+
+        if (minePositions.includes(index)) {
+          gameOver(false);
+          return;
+        }
+
+        if (!revealedCells.has(index)) {
+          revealedCells.add(index);
+          cell.classList.add('revealed');
+          const adjacentMines = countAdjacentMines(index);
+          if (adjacentMines > 0) {
+            cell.textContent = adjacentMines;
+          }
+          score++;
+          updateScore();
+
+          if (revealedCells.size === totalCells - totalMines) {
+            gameOver(true);
+          }
+        }
+      }
+
+      function countAdjacentMines(index) {
+        let count = 0;
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const newRow = row + i;
+            const newCol = col + j;
+            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+              const newIndex = newRow * cols + newCol;
+              if (minePositions.includes(newIndex)) {
+                count++;
+              }
+            }
+          }
+        }
+        return count;
+      }
+
+      function updateScore() {
+        scoreDisplay.textContent = `Puntos: ${score}`;
+      }
+
+      function gameOver(won) {
+        gameActive = false;
+        clearInterval(intervalId);
+        const time = Math.floor((Date.now() - startTime) / 1000);
+        
+        if (won) {
+          gameOverMessage.textContent = `¡Ganaste! Puntos: ${score} - Tiempo: ${time}s`;
+        } else {
+          gameOverMessage.textContent = `¡Perdiste! Puntos: ${score} - Tiempo: ${time}s`;
+          revealMines();
+        }
+        
+        overlay.style.display = 'flex';
+        saveScore(playerName, score, time, currentDifficulty);
+        startGameButton.style.display = 'block';
+        startGameButton.textContent = '¡Juega!';
+        
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 2000);
+      }
+
+      function revealMines() {
+        const cells = board.children;
+        minePositions.forEach(pos => {
+          cells[pos].classList.add('mine');
+          cells[pos].textContent = '💣';
+        });
+      }
+
+      function saveScore(name, score, time, difficulty) {
+        const scoreData = {
+          name,
+          score,
+          time,
+          difficulty,
+          date: new Date().toISOString()
+        };
+
+        const savedScores = localStorage.getItem('minesweeperScores');
+        let scores = savedScores ? JSON.parse(savedScores) : [];
+        scores.push(scoreData);
+        scores.sort((a, b) => b.score - a.score);
+        localStorage.setItem('minesweeperScores', JSON.stringify(scores));
+
+        addScoreToList(scoreData);
+      }
+
+      function addScoreToList(scoreData) {
+        const scoreEntry = document.createElement('li');
+        scoreEntry.textContent = `${scoreData.name} - ${scoreData.difficulty} - ${scoreData.score} puntos - ${scoreData.time}s`;
+        playerScoresList.appendChild(scoreEntry);
+      }
+
+      function startGame() {
+        gameActive = true;
+        score = 0;
+        updateScore();
+        startTime = Date.now();
+        intervalId = setInterval(updateTimer, 1000);
+        startGameButton.style.display = 'none';
+        createBoard();
+      }
+
+      function updateTimer() {
+        const time = Math.floor((Date.now() - startTime) / 1000);
+        timerDisplay.textContent = `Tiempo: ${time}s`;
+      }
+
+      function goToWelcome() {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('welcome-screen').style.display = 'flex';
+        clearInterval(intervalId);
+        gameActive = false;
+      }
+
+      function goToDifficulty() {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('difficulty-screen').style.display = 'flex';
+        clearInterval(intervalId);
+        gameActive = false;
+      }
+
+      startGameButton.addEventListener('click', startGame);
+
+      // Inicialización
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
